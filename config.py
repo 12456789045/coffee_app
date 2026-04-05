@@ -5,13 +5,20 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Database Configuration
-DB_CONFIG = {
-    "host": os.getenv("DB_HOST", "localhost"),
-    "port": int(os.getenv("DB_PORT", 3306)),
-    "user": os.getenv("DB_USER", "root"),
-    "password": os.getenv("DB_PASSWORD", "Hrishikesh@14"),
-    "database": os.getenv("DB_NAME", "coffee_shop"),
-}
+DB_TYPE = os.getenv("DB_TYPE", "mysql").lower()  # mysql or sqlite
+
+if DB_TYPE == "sqlite":
+    # SQLite doesn't need connection parameters
+    DB_CONFIG = {}
+else:
+    # MySQL configuration
+    DB_CONFIG = {
+        "host": os.getenv("DB_HOST", "localhost"),
+        "port": int(os.getenv("DB_PORT", 3306)),
+        "user": os.getenv("DB_USER", "root"),
+        "password": os.getenv("DB_PASSWORD", "Hrishikesh@14"),
+        "database": os.getenv("DB_NAME", "coffee_shop"),
+    }
 
 # Application Configuration
 APP_CONFIG = {

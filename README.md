@@ -108,30 +108,44 @@ pip install -r requirements.txt
 
 ### 4. Configure Environment Variables
 
+**For Local Development (MySQL):**
+
 ```bash
 # Copy the environment template
 cp .env.example .env
 
-# Edit .env with your database credentials
-# Required: Update MySQL host, username, password, and database name
+# Edit .env with your MySQL credentials
 ```
 
-**Example `.env` file:**
+**For Cloud Deployment (SQLite - Recommended for Streamlit Cloud):**
+
+```env
+# Set database type to SQLite for cloud deployment
+DB_TYPE=sqlite
+
+# Application settings
+APP_NAME=Coffee Shop Management System
+UPI_ID=merchant@upi
+GST_RATE=0.05
+SECRET_KEY=your-secret-key-here
+```
+
+**Example `.env` for Local MySQL:**
 
 ```env
 # Database Configuration
+DB_TYPE=mysql
 DB_HOST=localhost
+DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=your_mysql_password
 DB_NAME=coffee_shop
 
 # Application Settings
-APP_NAME=Coffee Shop Management
+APP_NAME=Coffee Shop Management System
 UPI_ID=merchant@upi
 GST_RATE=0.05
-
-# Security (Change these in production!)
-SECRET_KEY=your-secret-key-here
+SECRET_KEY=generate-a-secure-random-key
 ```
 
 ### 5. Set Up MySQL Database
@@ -388,9 +402,15 @@ CMD ["streamlit", "run", "app.py", "--server.headless", "true"]
 
 #### Using Streamlit Cloud
 
-1. Push code to GitHub
-2. Connect to [share.streamlit.io](https://share.streamlit.io)
-3. Deploy directly from repository
+1. **Push code to GitHub** (already done!)
+2. **Connect to [share.streamlit.io](https://share.streamlit.io)**
+3. **Deploy directly from repository**
+4. **Set environment variables in Streamlit Cloud:**
+   - `DB_TYPE=sqlite` (uses file-based database)
+   - `SECRET_KEY=your-secret-key-here`
+   - Other app settings as needed
+
+**Note:** Streamlit Cloud automatically uses the `.env` file or secrets management for environment variables.
 
 #### Using Heroku/VPS
 

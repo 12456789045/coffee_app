@@ -1,5 +1,5 @@
 from db import execute_query, get_connection
-from config import MENU_ITEMS, SIZE_OPTIONS, APP_CONFIG
+from config import MENU_ITEMS, SIZE_OPTIONS, APP_CONFIG, DB_TYPE
 import bcrypt
 import logging
 from datetime import datetime, timedelta
@@ -7,16 +7,19 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+# SQL placeholder based on database type
+SQL_PLACEHOLDER = "?" if DB_TYPE == "sqlite" else "%s"
+
 
 class User:
     @staticmethod
     def authenticate(username, password):
         """Authenticate user with username and password."""
         try:
-            query = """
+            query = f"""
                 SELECT id, username, password, role, email, phone, is_active
                 FROM users
-                WHERE username = %s AND is_active = TRUE
+                WHERE username = {SQL_PLACEHOLDER} AND is_active = 1
             """
             result = execute_query(query, (username,), fetch=True)
 
@@ -35,7 +38,9 @@ class User:
         try:
             # Check if user exists
             existing = execute_query(
-                "SELECT id FROM users WHERE username = %s", (username,), fetch=True
+                f"SELECT id FROM users WHERE username = {SQL_PLACEHOLDER}",
+                (username,),
+                fetch=True,
             )
             if existing:
                 raise ValueError("Username already exists")
@@ -44,9 +49,9 @@ class User:
             hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
 
             # Insert user
-            query = """
+            query = f"""
                 INSERT INTO users (username, password, role, email, phone)
-                VALUES (%s, %s, %s, %s, %s)
+                VALUES ({SQL_PLACEHOLDER}, {SQL_PLACEHOLDER}, {SQL_PLACEHOLDER}, {SQL_PLACEHOLDER}, {SQL_PLACEHOLDER})
             """
             execute_query(query, (username, hashed.decode("utf-8"), role, email, phone))
 
@@ -64,7 +69,7 @@ class User:
     @staticmethod
     def update_user_status(user_id, is_active):
         """Update user active status."""
-        query = "UPDATE users SET is_active = %s WHERE id = %s"
+        query = f"UPDATE users SET is_active = {SQL_PLACEHOLDER} WHERE id = {SQL_PLACEHOLDER}"
         execute_query(query, (is_active, user_id))
 
 
@@ -78,21 +83,40 @@ class Inventory:
     @staticmethod
     def add_or_update_item(item_name, stock_quantity, unit_price, category=None):
         """Add or update inventory item."""
-        query = """
-            INSERT INTO inventory (item_name, stock_quantity, unit_price, category)
-            VALUES (%s, %s, %s, %s)
-            ON DUPLICATE KEY UPDATE
-            stock_quantity = VALUES(stock_quantity),
-            unit_price = VALUES(unit_price),
-            category = VALUES(category),
-            updated_at = CURRENT_TIMESTAMP
-        """
-        execute_query(query, (item_name, stock_quantity, unit_price, category))
+        if DB_TYPE == "sqlite":
+            # SQLite approach: try to insert, if it fails, update
+            try:
+                query = f"""
+                    INSERT INTO inventory (item_name, stock_quantity, unit_price, category)
+                    VALUES ({SQL_PLACEHOLDER}, {SQL_PLACEHOLDER}, {SQL_PLACEHOLDER}, {SQL_PLACEHOLDER})
+                """
+                execute_query(query, (item_name, stock_quantity, unit_price, category))
+            except:
+                # If insert fails (duplicate), update instead
+                query = f"""
+                    UPDATE inventory
+                    SET stock_quantity = {SQL_PLACEHOLDER}, unit_price = {SQL_PLACEHOLDER},
+                        category = {SQL_PLACEHOLDER}, updated_at = CURRENT_TIMESTAMP
+                    WHERE item_name = {SQL_PLACEHOLDER}
+                """
+                execute_query(query, (stock_quantity, unit_price, category, item_name))
+        else:
+            # MySQL approach with ON DUPLICATE KEY UPDATE
+            query = f"""
+                INSERT INTO inventory (item_name, stock_quantity, unit_price, category)
+                VALUES ({SQL_PLACEHOLDER}, {SQL_PLACEHOLDER}, {SQL_PLACEHOLDER}, {SQL_PLACEHOLDER})
+                ON DUPLICATE KEY UPDATE
+                stock_quantity = VALUES(stock_quantity),
+                unit_price = VALUES(unit_price),
+                category = VALUES(category),
+                updated_at = CURRENT_TIMESTAMP
+            """
+            execute_query(query, (item_name, stock_quantity, unit_price, category))
 
     @staticmethod
     def update_stock(item_name, quantity_change):
         """Update stock quantity."""
-        query = "UPDATE inventory SET stock_quantity = stock_quantity + %s WHERE item_name = %s"
+        query = f"UPDATE inventory SET stock_quantity = stock_quantity + {SQL_PLACEHOLDER} WHERE item_name = {SQL_PLACEHOLDER}"
         execute_query(query, (quantity_change, item_name))
 
 
@@ -109,9 +133,9 @@ class Order:
             final_amount = subtotal + gst_amount
 
             # Insert order
-            order_query = """
+            order_query = f"""
                 INSERT INTO orders (customer_name, customer_phone, total_amount, gst_amount, final_amount, payment_method, created_by)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                VALUES ({SQL_PLACEHOLDER}, {SQL_PLACEHOLDER}, {SQL_PLACEHOLDER}, {SQL_PLACEHOLDER}, {SQL_PLACEHOLDER}, {SQL_PLACEHOLDER}, {SQL_PLACEHOLDER})
             """
             order_id = execute_query(
                 order_query,
@@ -129,9 +153,9 @@ class Order:
 
             # Insert order items
             for item in items:
-                item_query = """
+                item_query = f"""
                     INSERT INTO order_items (order_id, item_name, size, quantity, unit_price, total_price)
-                    VALUES (%s, %s, %s, %s, %s, %s)
+                    VALUES ({SQL_PLACEHOLDER}, {SQL_PLACEHOLDER}, {SQL_PLACEHOLDER}, {SQL_PLACEHOLDER}, {SQL_PLACEHOLDER}, {SQL_PLACEHOLDER})
                 """
                 execute_query(
                     item_query,
@@ -156,23 +180,25 @@ class Order:
     @staticmethod
     def get_orders(limit=50, offset=0):
         """Get orders with pagination."""
-        query = """
+        query = f"""
             SELECT o.*, u.username as created_by_name
             FROM orders o
             LEFT JOIN users u ON o.created_by = u.id
             ORDER BY o.created_at DESC
-            LIMIT %s OFFSET %s
+            LIMIT {SQL_PLACEHOLDER} OFFSET {SQL_PLACEHOLDER}
         """
         return execute_query(query, (limit, offset), fetch=True)
 
     @staticmethod
     def get_order_details(order_id):
         """Get order with items."""
-        order_query = "SELECT * FROM orders WHERE id = %s"
+        order_query = f"SELECT * FROM orders WHERE id = {SQL_PLACEHOLDER}"
         order = execute_query(order_query, (order_id,), fetch=True)
 
         if order:
-            items_query = "SELECT * FROM order_items WHERE order_id = %s"
+            items_query = (
+                f"SELECT * FROM order_items WHERE order_id = {SQL_PLACEHOLDER}"
+            )
             items = execute_query(items_query, (order_id,), fetch=True)
             order[0]["items"] = items
             return order[0]

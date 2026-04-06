@@ -547,5 +547,20 @@ For support and questions:
 - Admin dashboard
 
 ---
+## 👨‍💻 Author
+
+**Hrishikesh Kulkarni**
+
+[![GitHub](https://github.com/12456789045)
+[![LinkedIn](www.linkedin.com/in/hrishikesh-kulkarni-52b7b3259)
+
+🚀 FastAPI Developer
+🤖 Agentic AI Enthusiast
+🐍 Python Developer
+📊 Streamlit Developer
+
+---
+
+
 
 **Built with ❤️ for coffee shop owners everywhere**

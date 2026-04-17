@@ -207,7 +207,7 @@ class Order:
     @staticmethod
     def update_order_status(order_id, status):
         """Update order status."""
-        query = "UPDATE orders SET order_status = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
+        query = f"UPDATE orders SET order_status = {SQL_PLACEHOLDER}, updated_at = CURRENT_TIMESTAMP WHERE id = {SQL_PLACEHOLDER}"
         execute_query(query, (status, order_id))
 
     @staticmethod
@@ -218,7 +218,7 @@ class Order:
         if not end_date:
             end_date = datetime.now()
 
-        query = """
+        query = f"""
             SELECT
                 DATE(created_at) as date,
                 COUNT(*) as orders_count,
@@ -226,7 +226,7 @@ class Order:
                 SUM(gst_amount) as total_gst,
                 AVG(final_amount) as avg_order_value
             FROM orders
-            WHERE created_at BETWEEN %s AND %s
+            WHERE created_at BETWEEN {SQL_PLACEHOLDER} AND {SQL_PLACEHOLDER}
             AND order_status != 'cancelled'
             GROUP BY DATE(created_at)
             ORDER BY date DESC
@@ -236,7 +236,7 @@ class Order:
     @staticmethod
     def get_popular_items(limit=10):
         """Get most popular items."""
-        query = """
+        query = f"""
             SELECT
                 item_name,
                 SUM(quantity) as total_quantity,
@@ -247,6 +247,6 @@ class Order:
             WHERE o.order_status != 'cancelled'
             GROUP BY item_name
             ORDER BY total_quantity DESC
-            LIMIT %s
+            LIMIT {SQL_PLACEHOLDER}
         """
         return execute_query(query, (limit,), fetch=True)

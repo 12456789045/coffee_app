@@ -2,15 +2,12 @@ import os
 import sqlite3
 import mysql.connector
 from mysql.connector import Error
-from config import DB_CONFIG
+from config import DB_CONFIG, DB_TYPE
 import logging
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Database type configuration
-DB_TYPE = os.getenv("DB_TYPE", "mysql").lower()  # mysql or sqlite
 
 
 def get_connection():
@@ -104,7 +101,7 @@ def create_mysql_tables(cursor):
         """
         CREATE TABLE IF NOT EXISTS inventory (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            item_name VARCHAR(255) NOT NULL,
+            item_name VARCHAR(255) NOT NULL UNIQUE,
             stock_quantity INT DEFAULT 0,
             unit_price DECIMAL(10,2) NOT NULL,
             category VARCHAR(100),
@@ -174,7 +171,7 @@ def create_sqlite_tables(cursor):
         """
         CREATE TABLE IF NOT EXISTS inventory (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            item_name TEXT NOT NULL,
+            item_name TEXT NOT NULL UNIQUE,
             stock_quantity INTEGER DEFAULT 0,
             unit_price REAL NOT NULL,
             category TEXT,

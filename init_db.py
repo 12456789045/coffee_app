@@ -11,8 +11,10 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from db import create_tables, execute_query
 from models import User, Inventory
-from config import MENU_ITEMS
+from config import MENU_ITEMS, DB_TYPE
 import bcrypt
+
+SQL_PLACEHOLDER = "?" if DB_TYPE == "sqlite" else "%s"
 
 
 def initialize_database():
@@ -30,22 +32,37 @@ def initialize_database():
             admin_password = bcrypt.hashpw(
                 "admin123".encode("utf-8"), bcrypt.gensalt()
             ).decode("utf-8")
-            execute_query(
-                """
-                INSERT INTO users (username, password, role, email, phone)
-                VALUES (%s, %s, %s, %s, %s)
-                ON DUPLICATE KEY UPDATE
-                password = VALUES(password),
-                role = VALUES(role)
-            """,
-                (
-                    "admin",
-                    admin_password,
-                    "admin",
-                    "admin@coffeeshop.com",
-                    "+91 98765 43210",
-                ),
-            )
+            if DB_TYPE == "sqlite":
+                execute_query(
+                    f"""
+                    INSERT OR REPLACE INTO users (id, username, password, role, email, phone)
+                    VALUES (1, {SQL_PLACEHOLDER}, {SQL_PLACEHOLDER}, {SQL_PLACEHOLDER}, {SQL_PLACEHOLDER}, {SQL_PLACEHOLDER})
+                """,
+                    (
+                        "admin",
+                        admin_password,
+                        "admin",
+                        "admin@coffeeshop.com",
+                        "+91 98765 43210",
+                    ),
+                )
+            else:
+                execute_query(
+                    f"""
+                    INSERT INTO users (username, password, role, email, phone)
+                    VALUES ({SQL_PLACEHOLDER}, {SQL_PLACEHOLDER}, {SQL_PLACEHOLDER}, {SQL_PLACEHOLDER}, {SQL_PLACEHOLDER})
+                    ON DUPLICATE KEY UPDATE
+                    password = VALUES(password),
+                    role = VALUES(role)
+                """,
+                    (
+                        "admin",
+                        admin_password,
+                        "admin",
+                        "admin@coffeeshop.com",
+                        "+91 98765 43210",
+                    ),
+                )
         except Exception as e:
             print(f"⚠️ Admin user creation note: {e}")
 

@@ -50,8 +50,28 @@ def show_info_message(message):
     st.info(f"ℹ️ {message}")
 
 
+def parse_datetime(value):
+    """Parse datetime values from strings or return datetime objects unchanged."""
+    if isinstance(value, datetime):
+        return value
+    if isinstance(value, str):
+        for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+            try:
+                return datetime.strptime(value, fmt)
+            except ValueError:
+                continue
+    return value
+
+
 def create_order_summary(order_data):
     """Create a formatted order summary."""
+    created_at = parse_datetime(order_data.get("created_at"))
+    created_at_text = (
+        created_at.strftime("%Y-%m-%d %H:%M")
+        if isinstance(created_at, datetime)
+        else str(order_data.get("created_at", "N/A"))
+    )
+
     summary = f"""
 **Order Summary**
 - Customer: {order_data['customer_name']}
@@ -59,7 +79,7 @@ def create_order_summary(order_data):
 - Items: {len(order_data.get('items', []))}
 - Total: {format_currency(order_data['final_amount'])}
 - Status: {order_data['order_status'].title()}
-- Date: {order_data['created_at'].strftime('%Y-%m-%d %H:%M')}
+- Date: {created_at_text}
     """
     return summary
 

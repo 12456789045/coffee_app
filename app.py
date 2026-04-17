@@ -292,9 +292,23 @@ def order_history():
                 with st.expander(
                     f"Order #{order['id']} - {format_currency(order['final_amount'])} - {order['order_status'].title()}"
                 ):
+                    order_created_at = order.get("created_at")
+                    if isinstance(order_created_at, str):
+                        try:
+                            order_created_at = datetime.strptime(
+                                order_created_at, "%Y-%m-%d %H:%M:%S"
+                            )
+                        except ValueError:
+                            try:
+                                order_created_at = datetime.strptime(
+                                    order_created_at, "%Y-%m-%d %H:%M"
+                                )
+                            except ValueError:
+                                order_created_at = order_created_at
+
                     st.write(f"**Customer:** {order['customer_name']}")
                     st.write(
-                        f"**Date:** {order['created_at'].strftime('%Y-%m-%d %H:%M')}"
+                        f"**Date:** {order_created_at.strftime('%Y-%m-%d %H:%M') if isinstance(order_created_at, datetime) else order_created_at}"
                     )
                     st.write(f"**Payment:** {order['payment_method'].title()}")
                     st.write(f"**Status:** {order['order_status'].title()}")

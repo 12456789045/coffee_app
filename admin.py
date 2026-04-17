@@ -312,8 +312,21 @@ def order_management():
                         st.write(f"**Payment:** {order['payment_method'].title()}")
                     with col2:
                         st.write(f"**Phone:** {order.get('customer_phone', 'N/A')}")
+                        order_created_at = order.get("created_at")
+                        if isinstance(order_created_at, str):
+                            try:
+                                order_created_at = datetime.strptime(
+                                    order_created_at, "%Y-%m-%d %H:%M:%S"
+                                )
+                            except ValueError:
+                                try:
+                                    order_created_at = datetime.strptime(
+                                        order_created_at, "%Y-%m-%d %H:%M"
+                                    )
+                                except ValueError:
+                                    order_created_at = order_created_at
                         st.write(
-                            f"**Created:** {order['created_at'].strftime('%Y-%m-%d %H:%M')}"
+                            f"**Created:** {order_created_at.strftime('%Y-%m-%d %H:%M') if isinstance(order_created_at, datetime) else order_created_at}"
                         )
                     with col3:
                         st.write(

@@ -1,0 +1,77 @@
+version: "3.8"
+
+services:
+  streamlit-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: coffee-shop-app
+    ports:
+      - "8501:8501"
+    environment:
+      - DB_TYPE=mysql
+      - DB_HOST=mysql-db
+      - DB_PORT=3306
+      - DB_USER=coffee_user
+      - DB_PASSWORD=secure_password_change_me
+      - DB_NAME=coffee_shop
+      - SECRET_KEY=your-secret-key-change-in-production
+      - UPI_ID=merchant@upi
+      - ENVIRONMENT=production
+      - DEBUG=false
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+    volumes:
+      - ./data:/app/data
+      - ./bills:/app/bills
+    restart: unless-stopped
+    networks:
+      - coffee-shop-network
+
+  mysql-db:
+    image: mysql:8.0-debian
+    container_name: coffee-shop-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_password_change_me
+      - MYSQL_DATABASE=coffee_shop
+      - MYSQL_USER=coffee_user
+      - MYSQL_PASSWORD=secure_password_change_me
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - coffee-shop-network
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: coffee-shop-phpmyadmin
+    environment:
+      - PMA_HOST=mysql-db
+      - PMA_PORT=3306
+      - PMA_USER=coffee_user
+      - PMA_PASSWORD=secure_password_change_me
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql-db
+    restart: unless-stopped
+    networks:
+      - coffee-shop-network
+
+volumes:
+  mysql-data:
+    driver: local
+
+networks:
+  coffee-shop-network:
+    driver: bridge

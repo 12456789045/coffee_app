@@ -26,8 +26,57 @@ venv/
 env/
 ENV/
 .venv/
+env.bak/
+venv.bak/
 
 # Environment variables
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# Database files
+data/coffee_shop.db
+data/coffee_shop.db-shm
+data/coffee_shop.db-wal
+*.db
+*.sqlite3
+
+# Generated files
+/bills/*.pdf
+#*.pdf
+.streamlit/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Dependencies
+node_modules/
 .env
 .env.local
 .env.production
